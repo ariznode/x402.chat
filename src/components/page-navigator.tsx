@@ -68,7 +68,7 @@ export function PageNavigator() {
           disabled={isResolving || !input.trim()}
           className="gap-2"
         >
-          {isResolving ? "Resolving..." : "Go to Page"}
+          {isResolving ? "Resolving..." : "Go"}
           {!isResolving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>

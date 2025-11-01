@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageCircle, UserIcon } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, ViewTransition } from "react";
 import {
@@ -8,6 +8,7 @@ import {
   AccountAvatar,
   AccountName,
   AccountProvider,
+  Blobbie,
   useActiveAccount,
 } from "thirdweb/react";
 import { shortenAddress } from "thirdweb/utils";
@@ -109,9 +110,10 @@ export function CommentCard({
                       <AccountAvatar
                         className="h-10 w-10 rounded-full"
                         fallbackComponent={
-                          <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800">
-                            <UserIcon className="h-5 w-5 text-zinc-400" />
-                          </div>
+                          <Blobbie
+                            className="h-10 w-10 rounded-full"
+                            address={comment.fromAddress}
+                          />
                         }
                         loadingComponent={
                           <Skeleton className="h-10 w-10 rounded-full" />
@@ -149,15 +151,24 @@ export function CommentCard({
                       <span>Replying to </span>
                       <Link
                         href={`/${commentWithParent.parentComment.fromAddress}`}
-                        className="font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2"
+                        className="font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2 flex items-center gap-0.5"
                       >
                         <AccountProvider
                           address={commentWithParent.parentComment.fromAddress}
                           client={client}
                         >
+                          <AccountAvatar
+                            className="h-4 w-4 rounded-full"
+                            loadingComponent={
+                              <Skeleton className="h-4 w-4 rounded-full" />
+                            }
+                          />
                           <AccountName
                             fallbackComponent={
                               <AccountAddress formatFn={shortenAddress} />
+                            }
+                            loadingComponent={
+                              <Skeleton className="h-4 w-12 rounded-sm" />
                             }
                           />
                         </AccountProvider>
@@ -173,15 +184,23 @@ export function CommentCard({
                       address={comment.ownerAddress}
                       client={client}
                     >
-                      <AccountAvatar className="h-4 w-4 rounded-full" />
+                      <AccountAvatar
+                        className="h-4 w-4 rounded-full"
+                        loadingComponent={
+                          <Skeleton className="h-4 w-4 rounded-full" />
+                        }
+                      />
                       <AccountName
                         fallbackComponent={
                           <AccountAddress formatFn={shortenAddress} />
                         }
+                        loadingComponent={
+                          <Skeleton className="h-4 w-12 rounded-sm" />
+                        }
                       />
                     </AccountProvider>
                   </Link>
-                  <span className="-ml-1">&apos;s page</span>
+                  <span className="-ml-1">&apos;s wall</span>
                 </div>
               )}
 
