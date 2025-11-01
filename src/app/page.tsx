@@ -33,11 +33,11 @@ export default async function Home() {
           <div className="mx-auto max-w-2xl text-center space-y-6">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-                Find a Page
+                Find a Wall to Post On
               </h2>
               <p className="text-zinc-600 dark:text-zinc-400">
                 Enter any wallet address or ENS name to view or post on their
-                page
+                wall
               </p>
             </div>
             <PageNavigator />
@@ -47,10 +47,10 @@ export default async function Home() {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                Latest Comments
+                Latest Posts
               </h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Recent activity across all pages
+                Recent activity from across x402.chat
               </p>
             </div>
             <LatestCommentsFeed comments={latestComments} />
