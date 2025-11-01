@@ -162,6 +162,14 @@ export function CommentCard({
                             loadingComponent={
                               <Skeleton className="h-4 w-4 rounded-full" />
                             }
+                            fallbackComponent={
+                              <Blobbie
+                                className="h-4 w-4 rounded-full"
+                                address={
+                                  commentWithParent.parentComment.fromAddress
+                                }
+                              />
+                            }
                           />
                           <AccountName
                             fallbackComponent={
@@ -188,6 +196,12 @@ export function CommentCard({
                         className="h-4 w-4 rounded-full"
                         loadingComponent={
                           <Skeleton className="h-4 w-4 rounded-full" />
+                        }
+                        fallbackComponent={
+                          <Blobbie
+                            className="h-4 w-4 rounded-full"
+                            address={comment.ownerAddress}
+                          />
                         }
                       />
                       <AccountName
