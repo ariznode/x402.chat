@@ -1,6 +1,7 @@
 "use client";
 
 import { UserIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   AccountAvatar,
@@ -37,6 +38,7 @@ export function CommentForm({
   const [error, setError] = useState<string | null>(null);
   const account = useActiveAccount();
   const wallet = useActiveWallet();
+  const router = useRouter();
 
   const MAX_LENGTH = 1000;
 
@@ -93,6 +95,7 @@ export function CommentForm({
 
       if (result.status === 200) {
         setText("");
+        router.refresh();
         onSuccess?.();
       } else {
         const errorData = (await result.json()) as { error: string };
