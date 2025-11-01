@@ -1,0 +1,287 @@
+"use client";
+
+import { Heart, MessageCircle, UserIcon } from "lucide-react";
+import Link from "next/link";
+import { useState, ViewTransition } from "react";
+import {
+  AccountAddress,
+  AccountAvatar,
+  AccountName,
+  AccountProvider,
+  useActiveAccount,
+} from "thirdweb/react";
+import { shortenAddress } from "thirdweb/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { toggleLike } from "@/lib/mutations/comments";
+import type {
+  CommentWithParent,
+  CommentWithReplies,
+} from "@/lib/queries/comments";
+import { client } from "@/lib/thirdweb";
+import { Skeleton } from "./ui/skeleton";
+
+interface CommentCardProps {
+  comment: CommentWithReplies | CommentWithParent;
+  onReply?: (commentId: string) => void;
+  isReply?: boolean;
+  showPageInfo?: boolean;
+  hideActions?: boolean;
+  showThreadNavigation?: boolean;
+  suppressReplies?: boolean;
+}
+
+export function CommentCard({
+  comment,
+  onReply,
+  isReply = false,
+  showPageInfo = false,
+  hideActions = false,
+  showThreadNavigation = false,
+  suppressReplies = false,
+}: CommentCardProps) {
+  const [likesCount, setLikesCount] = useState(comment.likesCount);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const account = useActiveAccount();
+
+  const commentWithParent = comment as CommentWithParent;
+  const commentWithReplies = comment as CommentWithReplies;
+
+  const handleLike = async () => {
+    if (isLiking) return;
+
+    setIsLiking(true);
+    const newIsLiked = !isLiked;
+
+    // Optimistic update
+    setIsLiked(newIsLiked);
+    setLikesCount((prev) => prev + (newIsLiked ? 1 : -1));
+
+    const result = await toggleLike(comment.id, newIsLiked);
+
+    if (result.success && result.newCount !== undefined) {
+      setLikesCount(result.newCount);
+    } else {
+      // Revert on error
+      setIsLiked(!newIsLiked);
+      setLikesCount((prev) => prev + (newIsLiked ? -1 : 1));
+    }
+
+    setIsLiking(false);
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800)
+      return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <div className={isReply ? "ml-12" : ""}>
+      <ViewTransition name={`comment-card-${comment.id}`}>
+        <Card
+          className={`shadow-md ${
+            isReply ? "bg-zinc-50/80 dark:bg-zinc-900/30" : ""
+          }`}
+        >
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-start justify-between">
+                <Link
+                  href={`/${comment.fromAddress}`}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
+                  <AccountProvider
+                    address={comment.fromAddress}
+                    client={client}
+                  >
+                    <ViewTransition name={`comment-avatar-${comment.id}`}>
+                      <AccountAvatar
+                        className="h-10 w-10 rounded-full"
+                        fallbackComponent={
+                          <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                            <UserIcon className="h-5 w-5 text-zinc-400" />
+                          </div>
+                        }
+                        loadingComponent={
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                        }
+                      />
+                    </ViewTransition>
+                    <div className="flex flex-col gap-0.5">
+                      <AccountName
+                        className="font-semibold text-sm text-zinc-900 dark:text-zinc-100"
+                        fallbackComponent={
+                          <AccountAddress
+                            className="font-semibold text-sm text-zinc-900 dark:text-zinc-100"
+                            formatFn={shortenAddress}
+                          />
+                        }
+                        loadingComponent={
+                          <Skeleton className="h-5 w-24 rounded-sm" />
+                        }
+                      />
+                      <ViewTransition name={`comment-date-${comment.id}`}>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          {formatDate(comment.createdAt)}
+                        </span>
+                      </ViewTransition>
+                    </div>
+                  </AccountProvider>
+                </Link>
+              </div>
+
+              {/* Page context info - for latest comments feed */}
+              {showPageInfo && (
+                <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  {commentWithParent.parentComment && (
+                    <>
+                      <span>Replying to </span>
+                      <Link
+                        href={`/${commentWithParent.parentComment.fromAddress}`}
+                        className="font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2"
+                      >
+                        <AccountProvider
+                          address={commentWithParent.parentComment.fromAddress}
+                          client={client}
+                        >
+                          <AccountName
+                            fallbackComponent={
+                              <AccountAddress formatFn={shortenAddress} />
+                            }
+                          />
+                        </AccountProvider>
+                      </Link>
+                    </>
+                  )}
+                  <span>on</span>
+                  <Link
+                    href={`/${comment.ownerAddress}`}
+                    className="font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2 flex items-center gap-0.5"
+                  >
+                    <AccountProvider
+                      address={comment.ownerAddress}
+                      client={client}
+                    >
+                      <AccountAvatar className="h-4 w-4 rounded-full" />
+                      <AccountName
+                        fallbackComponent={
+                          <AccountAddress formatFn={shortenAddress} />
+                        }
+                      />
+                    </AccountProvider>
+                  </Link>
+                  <span className="-ml-1">&apos;s page</span>
+                </div>
+              )}
+
+              <ViewTransition name={`comment-text-${comment.id}`}>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap wrap-break-word leading-relaxed">
+                  {comment.text}
+                </p>
+              </ViewTransition>
+
+              {/* Actions or static likes display */}
+              {!hideActions ? (
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLike}
+                    disabled={isLiking || !account}
+                    className="h-8 px-3 gap-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${
+                        isLiked
+                          ? "fill-red-500 text-red-500"
+                          : "text-zinc-500 dark:text-zinc-400"
+                      }`}
+                    />
+                    <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                      {likesCount > 0 ? likesCount : "Like"}
+                    </span>
+                  </Button>
+
+                  {showThreadNavigation && !isReply && (
+                    <Link href={`/${comment.ownerAddress}/${comment.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-3 gap-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
+                      >
+                        <MessageCircle className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                          {commentWithReplies.replies?.length || 0}{" "}
+                          {commentWithReplies.replies?.length === 1
+                            ? "Comment"
+                            : "Comments"}
+                        </span>
+                      </Button>
+                    </Link>
+                  )}
+
+                  {onReply && !showThreadNavigation && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onReply(comment.id)}
+                      disabled={!account}
+                      className="h-8 px-3 gap-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
+                    >
+                      <MessageCircle className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                      <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                        Reply
+                      </span>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center gap-1.5 px-2">
+                    <Heart className="h-4 w-4 text-zinc-400" />
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      {comment.likesCount > 0
+                        ? `${comment.likesCount} ${comment.likesCount === 1 ? "Like" : "Likes"}`
+                        : ""}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </ViewTransition>
+
+      {/* Render replies - only when not using thread navigation */}
+      {!showPageInfo &&
+        !showThreadNavigation &&
+        !suppressReplies &&
+        commentWithReplies.replies &&
+        commentWithReplies.replies.length > 0 && (
+          <ViewTransition update="none">
+            <div className="space-y-3 mt-3 replies-expand-animation">
+              {commentWithReplies.replies.map((reply) => (
+                <CommentCard
+                  key={reply.id}
+                  comment={reply}
+                  onReply={onReply}
+                  isReply={true}
+                />
+              ))}
+            </div>
+          </ViewTransition>
+        )}
+    </div>
+  );
+}

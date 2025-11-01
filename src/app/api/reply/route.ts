@@ -1,0 +1,122 @@
+import { revalidatePath } from "next/cache";
+import { getAddress, isAddress } from "thirdweb";
+import { base } from "thirdweb/chains";
+import * as x402 from "thirdweb/x402";
+import z from "zod";
+import { db } from "@/db/client";
+import { comments } from "@/db/schema";
+import { serverClient } from "@/lib/server-client";
+
+const addressSchema = z
+  .string()
+  .refine((val) => isAddress(val), {
+    message: "Invalid address",
+  })
+  .transform((val) => getAddress(val));
+
+const commentSchema = z.object({
+  ownerAddress: addressSchema,
+  fromAddress: addressSchema,
+  text: z
+    .string()
+    .transform((val) => val.trim())
+    .refine((val) => val.length > 0 && val.length <= 1000, {
+      message: "Comment must be between 1 and 1000 characters",
+    }),
+  parentCommentId: z.uuid(),
+});
+
+export async function POST(request: Request) {
+  const data = await request.json();
+
+  const validatedData = commentSchema.safeParse(data);
+  if (!validatedData.success) {
+    return Response.json(
+      { error: validatedData.error.message },
+      { status: 400 },
+    );
+  }
+
+  const facilitator = x402.facilitator({
+    client: serverClient,
+    serverWalletAddress: process.env.SERVER_WALLET_ADDRESS || "",
+  });
+
+  const paymentData = request.headers.get("x-payment");
+
+  const result = await x402.settlePayment({
+    resourceUrl: "https://x402.chat/api/reply",
+    routeConfig: {
+      discoverable: true,
+      description: "Leave a reply to a comment.",
+      inputSchema: {
+        bodyFields: {
+          ownerAddress: {
+            type: "string",
+            description: "The wallet address of the owner of the page.",
+            required: true,
+          },
+          fromAddress: {
+            type: "string",
+            description: "The wallet address of the commenter.",
+            required: true,
+          },
+          text: {
+            type: "string",
+            description: "The text of the comment.",
+            required: true,
+            maxLength: 1000,
+          },
+          parentCommentId: {
+            type: "string",
+            description: "The ID of the parent comment.",
+            required: true,
+          },
+        },
+      },
+      outputSchema: {
+        commentId: {
+          type: "string",
+          description: "The ID of the reply.",
+        },
+      },
+    },
+    method: "GET",
+    paymentData: paymentData,
+    payTo: validatedData.data.ownerAddress,
+    network: base,
+    price: "$0.01", // or { amount, asset } for specific token
+    facilitator: facilitator,
+  });
+  if (result.status !== 200) {
+    // Payment required
+    return Response.json(result.responseBody, {
+      status: result.status,
+      headers: result.responseHeaders,
+    });
+  }
+
+  // actually create the comment and then revalidate the pages
+  const insertResult = await db
+    .insert(comments)
+    .values({
+      ownerAddress: validatedData.data.ownerAddress,
+      fromAddress: validatedData.data.fromAddress,
+      text: validatedData.data.text,
+      parentCommentId: validatedData.data.parentCommentId,
+    })
+    .returning();
+
+  if (!insertResult[0]) {
+    return Response.json({ error: "Failed to create reply" }, { status: 500 });
+  }
+
+  // revalidate the pages
+  revalidatePath(`/${validatedData.data.ownerAddress}`);
+  revalidatePath("/");
+
+  return Response.json(
+    { success: true, commentId: insertResult[0].id },
+    { status: 200 },
+  );
+}
