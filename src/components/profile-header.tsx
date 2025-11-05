@@ -19,7 +19,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ ownerAddress }: ProfileHeaderProps) {
   return (
     <Card className="mb-6 shadow-md">
-      <CardContent className="py-8">
+      <CardContent>
         <div className="flex items-center gap-6">
           <AccountProvider address={ownerAddress} client={client}>
             <AccountAvatar
@@ -41,6 +41,10 @@ export function ProfileHeader({ ownerAddress }: ProfileHeaderProps) {
                   />
                 }
                 loadingComponent={<Skeleton className="h-9 w-48 rounded-lg" />}
+              />
+              <AccountAddress
+                className="text-sm text-zinc-500 dark:text-zinc-400"
+                formatFn={shortenAddress}
               />
             </div>
           </AccountProvider>

@@ -23,7 +23,10 @@ interface CommentFormProps {
   onCancel?: () => void;
   placeholder?: string;
   ownerName?: string;
+  existingCommentCount?: number;
 }
+
+const BASE_UNIT_PRICE = 0.01;
 
 export function CommentForm({
   ownerAddress,
@@ -32,6 +35,7 @@ export function CommentForm({
   onCancel,
   placeholder,
   ownerName,
+  existingCommentCount = 0,
 }: CommentFormProps) {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +45,10 @@ export function CommentForm({
   const router = useRouter();
 
   const MAX_LENGTH = 1000;
+
+  // Calculate dynamic price based on existing comment count
+  const price = (existingCommentCount * BASE_UNIT_PRICE).toFixed(2);
+  const priceLabel = `$${price}`;
 
   // Generate contextual placeholder
   const getPlaceholder = () => {
@@ -123,7 +131,7 @@ export function CommentForm({
 
   return (
     <Card className="shadow-md">
-      <CardContent className="py-4">
+      <CardContent>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex gap-3">
             <AccountProvider address={account.address} client={client}>
@@ -139,7 +147,7 @@ export function CommentForm({
                 }
               />
             </AccountProvider>
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 flex flex-col gap-2">
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -149,7 +157,7 @@ export function CommentForm({
                 maxLength={MAX_LENGTH}
                 rows={3}
               />
-              <div className="flex items-center justify-between">
+              <div className="flex items-top justify-between">
                 <span className="text-xs text-zinc-400">
                   {text.length}/{MAX_LENGTH}
                 </span>
@@ -169,12 +177,13 @@ export function CommentForm({
                     type="submit"
                     disabled={isSubmitting || !text.trim()}
                     size="sm"
+                    className="min-w-32 px-4"
                   >
                     {isSubmitting
                       ? "Posting..."
                       : parentCommentId
-                        ? "Reply"
-                        : "Post"}
+                        ? `Reply for ${priceLabel}`
+                        : `Post for ${priceLabel}`}
                   </Button>
                 </div>
               </div>

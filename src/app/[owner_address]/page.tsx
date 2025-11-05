@@ -1,7 +1,7 @@
 import { CommentForm } from "@/components/comment-form";
 import { CommentList } from "@/components/comment-list";
 import { ProfileHeader } from "@/components/profile-header";
-import { getComments } from "@/lib/queries/comments";
+import { getCommentCount, getComments } from "@/lib/queries/comments";
 
 interface PageViewProps {
   params: Promise<{ owner_address: string }>;
@@ -19,7 +19,10 @@ export default async function PageView(props: PageViewProps) {
   const limit = Number.parseInt(searchParams.limit || "30", 10);
   const offset = (page - 1) * limit;
 
-  const comments = await getComments(ownerIdentifier, limit, offset);
+  const [comments, commentCount] = await Promise.all([
+    getComments(ownerIdentifier, limit, offset),
+    getCommentCount(ownerIdentifier),
+  ]);
 
   return (
     <main className="container mx-auto max-w-3xl px-4 py-8">
@@ -29,7 +32,10 @@ export default async function PageView(props: PageViewProps) {
 
         {/* Comment Form */}
         <div>
-          <CommentForm ownerAddress={ownerIdentifier} />
+          <CommentForm
+            ownerAddress={ownerIdentifier}
+            existingCommentCount={commentCount}
+          />
         </div>
 
         {/* Comments List */}

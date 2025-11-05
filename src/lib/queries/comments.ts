@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
 import { getAddress } from "thirdweb";
 import { db } from "@/db/client";
 import { type Comment, comments } from "@/db/schema";
@@ -143,5 +143,20 @@ export async function getCommentThread(
   } catch (error) {
     console.error("Error fetching comment thread:", error);
     return null;
+  }
+}
+
+export async function getCommentCount(ownerAddress: string): Promise<number> {
+  try {
+    const address = getAddress(ownerAddress);
+    const [{ count: commentCount }] = await db
+      .select({ count: count() })
+      .from(comments)
+      .where(eq(comments.ownerAddress, address));
+
+    return commentCount;
+  } catch (error) {
+    console.error("Error fetching comment count:", error);
+    return 0;
   }
 }

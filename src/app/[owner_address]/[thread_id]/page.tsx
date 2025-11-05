@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AccountAddress, AccountName, AccountProvider } from "thirdweb/react";
+import { shortenAddress } from "thirdweb/utils";
 import { CommentCard } from "@/components/comment-card";
 import { CommentForm } from "@/components/comment-form";
 import { Button } from "@/components/ui/button";
-import { getCommentThread } from "@/lib/queries/comments";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getCommentCount, getCommentThread } from "@/lib/queries/comments";
+import { client } from "@/lib/thirdweb";
 
 interface ThreadViewProps {
   params: Promise<{ owner_address: string; thread_id: string }>;
@@ -12,8 +16,11 @@ interface ThreadViewProps {
 export default async function ThreadView(props: ThreadViewProps) {
   const params = await props.params;
 
-  // Fetch the thread
-  const thread = await getCommentThread(params.thread_id);
+  // Fetch the thread and comment count
+  const [thread, commentCount] = await Promise.all([
+    getCommentThread(params.thread_id),
+    getCommentCount(params.owner_address),
+  ]);
 
   // If thread not found, show 404
   if (!thread) {
@@ -24,29 +31,35 @@ export default async function ThreadView(props: ThreadViewProps) {
     <main className="container mx-auto max-w-3xl px-4 py-8">
       <div className="space-y-4">
         {/* Back navigation */}
-        <Link href={`/${params.owner_address}`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+        <AccountProvider address={params.owner_address} client={client}>
+          <Link href={`/${params.owner_address}`}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Back to Profile
-          </Button>
-        </Link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Back to{" "}
+              <AccountName
+                fallbackComponent={<AccountAddress formatFn={shortenAddress} />}
+                loadingComponent={<Skeleton className="h-4 w-12 rounded-sm" />}
+              />
+            </Button>
+          </Link>
+        </AccountProvider>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 px-1">
           Conversation
         </h2>
@@ -56,6 +69,7 @@ export default async function ThreadView(props: ThreadViewProps) {
           comment={thread}
           hideActions={false}
           suppressReplies={true}
+          disableNavigation={true}
         />
 
         {/* Replies section */}
@@ -70,6 +84,7 @@ export default async function ThreadView(props: ThreadViewProps) {
                   key={reply.id}
                   comment={reply}
                   hideActions={false}
+                  disableNavigation={true}
                 />
               ))}
             </div>
@@ -82,6 +97,7 @@ export default async function ThreadView(props: ThreadViewProps) {
             ownerAddress={thread.ownerAddress}
             parentCommentId={thread.id}
             placeholder="Write a reply..."
+            existingCommentCount={commentCount}
           />
         </div>
       </div>

@@ -23,7 +23,7 @@ export default async function OwnerLayout(props: OwnerLayoutProps) {
     <ViewTransition>
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
         {/* Header */}
-        <PageHeader ownerAddress={ownerIdentifier} />
+        <PageHeader />
 
         {/* Main Content */}
         {props.children}

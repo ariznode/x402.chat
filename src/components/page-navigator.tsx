@@ -60,16 +60,16 @@ export function PageNavigator() {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isResolving}
-            className="pl-9"
+            className="pl-9 bg-background h-10"
           />
         </div>
         <Button
           onClick={handleNavigate}
           disabled={isResolving || !input.trim()}
-          className="gap-2"
+          className="gap-2 h-10 min-w-32"
         >
           {isResolving ? "Resolving..." : "Go"}
-          {!isResolving && <ArrowRight className="h-4 w-4" />}
+          {!isResolving && <ArrowRight className="h-6 w-6" />}
         </Button>
       </div>
       {error && (
