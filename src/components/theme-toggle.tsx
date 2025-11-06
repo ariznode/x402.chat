@@ -42,7 +42,6 @@ export function ThemeToggle() {
 
   const getTitle = () => {
     if (theme === "light") return "Switch to dark mode";
-    if (theme === "dark") return "Switch to system mode";
     return "Switch to light mode";
   };
 
