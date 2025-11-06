@@ -49,7 +49,7 @@ export async function getComments(
   }
 }
 
-export async function getCommentReplies(parentId: string): Promise<Comment[]> {
+async function getCommentReplies(parentId: string): Promise<Comment[]> {
   try {
     const replies = await db
       .select()
@@ -64,7 +64,7 @@ export async function getCommentReplies(parentId: string): Promise<Comment[]> {
   }
 }
 
-export async function getCommentById(id: string): Promise<Comment | null> {
+async function getCommentById(id: string): Promise<Comment | null> {
   try {
     const result = await db
       .select()
