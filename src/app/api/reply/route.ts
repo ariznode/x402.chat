@@ -9,17 +9,9 @@ import { comments } from "@/db/schema";
 import { serverClient } from "@/lib/server-client";
 
 const BASE_UNIT_PRICE = 0.01;
+const chain = base;
 
-const addressSchema = z
-  .string()
-  .refine((val) => isAddress(val), {
-    message: "Invalid address",
-  })
-  .transform((val) => getAddress(val));
-
-const commentSchema = z.object({
-  ownerAddress: addressSchema,
-  fromAddress: addressSchema,
+const replySchema = z.object({
   text: z
     .string()
     .transform((val) => val.trim())
@@ -32,13 +24,29 @@ const commentSchema = z.object({
 export async function POST(request: Request) {
   const data = await request.json();
 
-  const validatedData = commentSchema.safeParse(data);
+  const validatedData = replySchema.safeParse(data);
   if (!validatedData.success) {
     return Response.json(
       { error: validatedData.error.message },
       { status: 400 },
     );
   }
+
+  // Validate that the parent comment exists and get its owner address
+  const parentComment = await db
+    .select()
+    .from(comments)
+    .where(eq(comments.id, validatedData.data.parentCommentId))
+    .limit(1);
+
+  if (!parentComment[0]) {
+    return Response.json(
+      { error: "Parent comment not found" },
+      { status: 404 },
+    );
+  }
+
+  const ownerAddress = parentComment[0].ownerAddress;
 
   const facilitator = x402.facilitator({
     client: serverClient,
@@ -51,7 +59,7 @@ export async function POST(request: Request) {
   const [{ count: existingCommentsCount }] = await db
     .select({ count: count() })
     .from(comments)
-    .where(eq(comments.ownerAddress, validatedData.data.ownerAddress));
+    .where(eq(comments.ownerAddress, ownerAddress));
 
   // Calculate dynamic price based on existing comments
   const dynamicPrice = `$${(existingCommentsCount * BASE_UNIT_PRICE).toFixed(2)}`;
@@ -63,16 +71,6 @@ export async function POST(request: Request) {
       description: "Leave a reply to a comment.",
       inputSchema: {
         bodyFields: {
-          ownerAddress: {
-            type: "string",
-            description: "The wallet address of the owner of the page.",
-            required: true,
-          },
-          fromAddress: {
-            type: "string",
-            description: "The wallet address of the commenter.",
-            required: true,
-          },
           text: {
             type: "string",
             description: "The text of the comment.",
@@ -95,8 +93,8 @@ export async function POST(request: Request) {
     },
     method: "POST",
     paymentData: paymentData,
-    payTo: validatedData.data.ownerAddress,
-    network: base,
+    payTo: ownerAddress,
+    network: chain,
     price: dynamicPrice,
     facilitator: facilitator,
   });
@@ -108,12 +106,20 @@ export async function POST(request: Request) {
     });
   }
 
+  const payerAddress = result.paymentReceipt.payer;
+  if (!payerAddress || !isAddress(payerAddress)) {
+    return Response.json(
+      { error: "No valid payer address found in the payment receipt." },
+      { status: 500 },
+    );
+  }
+
   // actually create the comment and then revalidate the pages
   const insertResult = await db
     .insert(comments)
     .values({
-      ownerAddress: validatedData.data.ownerAddress,
-      fromAddress: validatedData.data.fromAddress,
+      ownerAddress: ownerAddress,
+      fromAddress: getAddress(payerAddress),
       text: validatedData.data.text,
       parentCommentId: validatedData.data.parentCommentId,
     })
@@ -124,7 +130,7 @@ export async function POST(request: Request) {
   }
 
   // revalidate the pages
-  revalidatePath(`/${validatedData.data.ownerAddress}`);
+  revalidatePath(`/${ownerAddress}`);
   revalidatePath("/");
 
   return Response.json(

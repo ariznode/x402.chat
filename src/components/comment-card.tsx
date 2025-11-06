@@ -2,6 +2,7 @@
 
 import { Heart, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, ViewTransition } from "react";
 import {
   AccountAddress,
@@ -43,6 +44,7 @@ export function CommentCard({
   suppressReplies = false,
   disableNavigation = false,
 }: CommentCardProps) {
+  const router = useRouter();
   const [likesCount, setLikesCount] = useState(comment.likesCount);
   const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -290,7 +292,9 @@ export function CommentCard({
               <div className="flex items-center gap-1.5 px-2">
                 <Heart className="h-4 w-4 text-zinc-400" />
                 <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                  {`${comment.likesCount} ${comment.likesCount === 1 ? "Like" : "Likes"}`}
+                  {`${comment.likesCount} ${
+                    comment.likesCount === 1 ? "Like" : "Likes"
+                  }`}
                 </span>
               </div>
             </div>
@@ -306,12 +310,17 @@ export function CommentCard({
         {disableNavigation ? (
           cardContent
         ) : (
-          <Link
-            href={`/${comment.ownerAddress}/${comment.id}`}
-            className="block transition-opacity hover:opacity-90"
+          // biome-ignore lint/a11y/noStaticElementInteractions: we want to use a div as a button
+          // biome-ignore lint/a11y/useKeyWithClickEvents: we want to use a div as a button
+          <div
+            onClick={(e) => {
+              e.preventDefault();
+              router.push(`/${comment.ownerAddress}/${comment.id}`);
+            }}
+            className="block transition-opacity hover:opacity-90 w-full text-left"
           >
             {cardContent}
-          </Link>
+          </div>
         )}
       </ViewTransition>
 

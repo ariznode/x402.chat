@@ -93,12 +93,17 @@ export function CommentForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ownerAddress,
-          fromAddress: account.address,
-          text,
-          parentCommentId,
-        }),
+        body: JSON.stringify(
+          parentCommentId
+            ? {
+                text,
+                parentCommentId,
+              }
+            : {
+                ownerAddress,
+                text,
+              },
+        ),
       });
 
       if (result.status === 200) {

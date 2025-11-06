@@ -1,13 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AccountAddress, AccountName, AccountProvider } from "thirdweb/react";
-import { shortenAddress } from "thirdweb/utils";
+import { BackToProfileButton } from "@/components/back-to-profile-button";
 import { CommentCard } from "@/components/comment-card";
 import { CommentForm } from "@/components/comment-form";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getCommentCount, getCommentThread } from "@/lib/queries/comments";
-import { client } from "@/lib/thirdweb";
 
 interface ThreadViewProps {
   params: Promise<{ owner_address: string; thread_id: string }>;
@@ -31,35 +26,7 @@ export default async function ThreadView(props: ThreadViewProps) {
     <main className="container mx-auto max-w-3xl px-4 py-8">
       <div className="space-y-4">
         {/* Back navigation */}
-        <AccountProvider address={params.owner_address} client={client}>
-          <Link href={`/${params.owner_address}`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Back to{" "}
-              <AccountName
-                fallbackComponent={<AccountAddress formatFn={shortenAddress} />}
-                loadingComponent={<Skeleton className="h-4 w-12 rounded-sm" />}
-              />
-            </Button>
-          </Link>
-        </AccountProvider>
+        <BackToProfileButton ownerAddress={params.owner_address} />
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 px-1">
           Conversation
         </h2>

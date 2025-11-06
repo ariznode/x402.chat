@@ -19,7 +19,6 @@ const addressSchema = z
 
 const commentSchema = z.object({
   ownerAddress: addressSchema,
-  fromAddress: addressSchema,
   text: z
     .string()
     .transform((val) => val.trim())
@@ -65,12 +64,7 @@ export async function POST(request: Request) {
         bodyFields: {
           ownerAddress: {
             type: "string",
-            description: "The wallet address of the owner of the page.",
-            required: true,
-          },
-          fromAddress: {
-            type: "string",
-            description: "The wallet address of the commenter.",
+            description: "The wallet address to post the comment to.",
             required: true,
           },
           text: {
@@ -104,12 +98,22 @@ export async function POST(request: Request) {
     });
   }
 
+  const payerAddress = result.paymentReceipt.payer;
+  if (!payerAddress || !isAddress(payerAddress)) {
+    return Response.json(
+      {
+        error: "No valid payer address found in the payment receipt.",
+      },
+      { status: 500 },
+    );
+  }
+
   // actually create the comment and then revalidate the pages
   const insertResult = await db
     .insert(comments)
     .values({
       ownerAddress: validatedData.data.ownerAddress,
-      fromAddress: validatedData.data.fromAddress,
+      fromAddress: getAddress(payerAddress),
       text: validatedData.data.text,
     })
     .returning();
