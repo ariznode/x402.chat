@@ -12,16 +12,19 @@ export function Logo({ withText = true, size = "md" }: LogoProps) {
       container: "h-8",
       icon: "h-8 w-8",
       text: "text-lg",
+      width: 32,
     },
     md: {
       container: "h-10",
       icon: "h-10 w-10",
       text: "text-xl",
+      width: 40,
     },
     lg: {
       container: "h-12",
       icon: "h-12 w-12",
       text: "text-2xl",
+      width: 48,
     },
   };
 
@@ -36,6 +39,8 @@ export function Logo({ withText = true, size = "md" }: LogoProps) {
         src="/icon.png"
         alt="x402.chat"
         className={`${sizeConfig.icon} shrink-0`}
+        width={sizeConfig.width}
+        height={sizeConfig.width}
       />
 
       {/* Text */}

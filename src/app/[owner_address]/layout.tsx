@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import { isAddress } from "thirdweb";
-import { PageHeader } from "@/components/page-header";
 
 interface OwnerLayoutProps {
   children: React.ReactNode;
@@ -19,15 +18,5 @@ export default async function OwnerLayout(props: OwnerLayoutProps) {
     notFound();
   }
 
-  return (
-    <ViewTransition>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        {/* Header */}
-        <PageHeader />
-
-        {/* Main Content */}
-        {props.children}
-      </div>
-    </ViewTransition>
-  );
+  return <ViewTransition>{props.children}</ViewTransition>;
 }
