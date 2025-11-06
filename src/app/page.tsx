@@ -1,8 +1,5 @@
 import { LatestCommentsFeed } from "@/components/latest-comments-feed";
-import { Logo } from "@/components/logo";
 import { PageNavigator } from "@/components/page-navigator";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { WalletConnect } from "@/components/wallet-connect";
 import { getLatestComments } from "@/lib/queries/comments";
 import { PageHeader } from "../components/page-header";
 

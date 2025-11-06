@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 interface LogoProps {
@@ -31,7 +32,7 @@ export function Logo({ withText = true, size = "md" }: LogoProps) {
       href="/"
       className="flex items-center gap-2 transition-opacity hover:opacity-80"
     >
-      <img
+      <Image
         src="/icon.png"
         alt="x402.chat"
         className={`${sizeConfig.icon} shrink-0`}
