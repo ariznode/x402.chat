@@ -79,6 +79,57 @@ export function TopUpModal({
   // Calculate price in USD
   const priceInUSD = tokenAmount * 0.001;
 
+  const pollTransactionStatus = async (transactionId: string) => {
+    const toastId = toast.loading("Minting tokens...", {
+      description: "Transaction is being processed",
+    });
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(
+          `/api/transaction-status?transactionId=${transactionId}`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch transaction status");
+        }
+
+        const result = (await response.json()) as {
+          status: string;
+          transactionId: string;
+        };
+
+        if (result.status === "CONFIRMED") {
+          clearInterval(pollInterval);
+          toast.success("Tokens minted successfully!", {
+            id: toastId,
+            description: `${tokenAmount} ${tokenInfo.symbol} tokens have been added to your wallet`,
+          });
+
+          // Invalidate balances to refresh
+          invalidateBalances({
+            chainId: chain.id,
+          });
+
+          onSuccess?.();
+        } else if (result.status === "FAILED") {
+          clearInterval(pollInterval);
+          toast.error("Transaction failed", {
+            id: toastId,
+            description: "Failed to mint tokens. Please try again.",
+          });
+        }
+      } catch (err) {
+        clearInterval(pollInterval);
+        toast.error("Error checking transaction status", {
+          id: toastId,
+          description: "Please refresh the page to check your balance",
+        });
+        console.error("Error polling transaction status:", err);
+      }
+    }, 2000); // Poll every 2 seconds
+  };
+
   const handleMint = async () => {
     if (!wallet) {
       setError("No wallet connected");
@@ -115,19 +166,15 @@ export function TopUpModal({
         throw new Error(errorData.error || "Failed to mint tokens");
       }
 
-      // Show success message
-      toast.success("Tokens minted successfully!", {
-        description: `${tokenAmount} ${tokenInfo.symbol} tokens have been added to your wallet`,
-      });
+      const result = (await response.json()) as {
+        success: boolean;
+        transactionId: string;
+        message: string;
+      };
 
-      // Invalidate balances to refresh
-      invalidateBalances({
-        chainId: chain.id,
-      });
-
-      // Close modal and call success callback
+      // Close modal immediately and start polling
       onOpenChange(false);
-      onSuccess?.();
+      pollTransactionStatus(result.transactionId);
     } catch (err) {
       console.error("Error minting tokens:", err);
       setError(err instanceof Error ? err.message : "Failed to mint tokens");
