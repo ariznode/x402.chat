@@ -2,7 +2,7 @@ import { toWei } from "thirdweb";
 import type { ERC20TokenAmount } from "thirdweb/x402";
 import { tokenAddress } from "@/lib/constants";
 
-export const BASE_UNIT_PRICE = toWei("1");
+const BASE_UNIT_PRICE = toWei("1");
 
 export function getDynamicPrice(replyCount: number): ERC20TokenAmount {
   return {
