@@ -1,16 +1,16 @@
 "use client";
 
-import { UserIcon } from "lucide-react";
 import {
   AccountAddress,
   AccountAvatar,
   AccountName,
   AccountProvider,
+  Blobbie,
 } from "thirdweb/react";
 import { shortenAddress } from "thirdweb/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { client } from "@/lib/thirdweb";
+import { client } from "@/lib/thirdweb.client";
 
 interface ProfileHeaderProps {
   ownerAddress: string;
@@ -25,9 +25,10 @@ export function ProfileHeader({ ownerAddress }: ProfileHeaderProps) {
             <AccountAvatar
               className="h-24 w-24 rounded-xl"
               fallbackComponent={
-                <div className="flex items-center justify-center h-24 w-24 rounded-xl bg-zinc-100 dark:bg-zinc-800">
-                  <UserIcon className="h-12 w-12 text-zinc-400" />
-                </div>
+                <Blobbie
+                  className="h-24 w-24 rounded-xl"
+                  address={ownerAddress}
+                />
               }
               loadingComponent={<Skeleton className="h-24 w-24 rounded-xl" />}
             />

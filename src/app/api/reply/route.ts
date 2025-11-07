@@ -6,7 +6,8 @@ import * as x402 from "thirdweb/x402";
 import z from "zod";
 import { db } from "@/db/client";
 import { comments } from "@/db/schema";
-import { serverClient } from "@/lib/server-client";
+import { serverClient } from "@/lib/thirdweb.server";
+import { getDynamicPrice } from "../constants";
 
 const BASE_UNIT_PRICE = 0.01;
 const chain = base;
@@ -61,9 +62,6 @@ export async function POST(request: Request) {
     .from(comments)
     .where(eq(comments.ownerAddress, ownerAddress));
 
-  // Calculate dynamic price based on existing comments
-  const dynamicPrice = `$${(existingCommentsCount * BASE_UNIT_PRICE).toFixed(2)}`;
-
   const result = await x402.settlePayment({
     resourceUrl: "https://x402.chat/api/reply",
     routeConfig: {
@@ -95,7 +93,7 @@ export async function POST(request: Request) {
     paymentData: paymentData,
     payTo: ownerAddress,
     network: chain,
-    price: dynamicPrice,
+    price: getDynamicPrice(existingCommentsCount),
     facilitator: facilitator,
   });
   if (result.status !== 200) {

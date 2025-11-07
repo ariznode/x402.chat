@@ -6,15 +6,20 @@ import { useState } from "react";
 import {
   AccountAvatar,
   AccountProvider,
+  Blobbie,
   useActiveAccount,
   useActiveWallet,
+  useInvalidateBalances,
 } from "thirdweb/react";
 import { wrapFetchWithPayment } from "thirdweb/x402";
+import { Logo } from "@/components/logo";
+import { TopUpModal } from "@/components/top-up-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { client } from "@/lib/thirdweb";
+import { client } from "@/lib/thirdweb.client";
+import { chain } from "../lib/constants";
 
 interface CommentFormProps {
   ownerAddress: string;
@@ -25,8 +30,6 @@ interface CommentFormProps {
   ownerName?: string;
   existingCommentCount?: number;
 }
-
-const BASE_UNIT_PRICE = 0.01;
 
 export function CommentForm({
   ownerAddress,
@@ -40,15 +43,13 @@ export function CommentForm({
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
   const account = useActiveAccount();
   const wallet = useActiveWallet();
+  const invalidateBalances = useInvalidateBalances();
   const router = useRouter();
 
   const MAX_LENGTH = 1000;
-
-  // Calculate dynamic price based on existing comment count
-  const price = (existingCommentCount * BASE_UNIT_PRICE).toFixed(2);
-  const priceLabel = `$${price}`;
 
   // Generate contextual placeholder
   const getPlaceholder = () => {
@@ -109,10 +110,26 @@ export function CommentForm({
       if (result.status === 200) {
         setText("");
         router.refresh();
+        invalidateBalances({
+          chainId: chain.id,
+        });
         onSuccess?.();
       } else {
-        const errorData = (await result.json()) as { error: string };
-        setError(errorData.error || "Failed to post comment");
+        const errorData = (await result.json()) as {
+          error: string;
+          errorMessage?: string;
+        };
+
+        if (errorData.error === "insufficient_funds") {
+          setShowTopUpModal(true);
+          setIsSubmitting(false);
+          return;
+        }
+
+        setError(
+          (errorData.error || "Failed to post comment") +
+            (errorData.errorMessage ? `: ${errorData.errorMessage}` : ""),
+        );
       }
     } catch (err) {
       console.error("Error posting comment:", err);
@@ -137,71 +154,86 @@ export function CommentForm({
   return (
     <Card className="shadow-md">
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="flex gap-3">
-            <AccountProvider address={account.address} client={client}>
-              <AccountAvatar
-                className="h-10 w-10 rounded-full shrink-0"
-                fallbackComponent={
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800">
-                    <UserIcon className="h-5 w-5 text-zinc-400" />
-                  </div>
-                }
-                loadingComponent={
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                }
-              />
-            </AccountProvider>
-            <div className="flex-1 space-y-2 flex flex-col gap-2">
-              <Textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={getPlaceholder()}
-                className="min-h-[80px] resize-none"
-                disabled={isSubmitting}
-                maxLength={MAX_LENGTH}
-                rows={3}
-              />
-              <div className="flex items-top justify-between">
-                <span className="text-xs text-zinc-400">
-                  {text.length}/{MAX_LENGTH}
-                </span>
-                <div className="flex gap-2">
-                  {onCancel && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={onCancel}
-                      disabled={isSubmitting}
-                    >
-                      Cancel
-                    </Button>
-                  )}
+        <div className="flex gap-3">
+          <AccountProvider address={account.address} client={client}>
+            <AccountAvatar
+              className="h-10 w-10 rounded-full shrink-0"
+              fallbackComponent={
+                <Blobbie
+                  className="h-5 w-5 rounded-full"
+                  address={account.address}
+                />
+              }
+              loadingComponent={<Skeleton className="h-10 w-10 rounded-full" />}
+            />
+          </AccountProvider>
+          <div className="flex-1 space-y-2 flex flex-col gap-2">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={getPlaceholder()}
+              className="min-h-[80px] resize-none"
+              disabled={isSubmitting}
+              maxLength={MAX_LENGTH}
+              rows={3}
+            />
+            <div className="flex items-top justify-between">
+              <span className="text-xs text-zinc-400">
+                {text.length}/{MAX_LENGTH}
+              </span>
+              <div className="flex gap-2">
+                {onCancel && (
                   <Button
-                    type="submit"
-                    disabled={isSubmitting || !text.trim()}
+                    type="button"
+                    variant="ghost"
                     size="sm"
-                    className="min-w-32 px-4"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
                   >
-                    {isSubmitting
-                      ? "Posting..."
-                      : parentCommentId
-                        ? `Reply for ${priceLabel}`
-                        : `Post for ${priceLabel}`}
+                    Cancel
                   </Button>
-                </div>
+                )}
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !text.trim()}
+                  size="sm"
+                  className="min-w-32 px-4 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    "Posting..."
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      {parentCommentId ? "Reply" : "Post"} for{" "}
+                      <span className="font-bold text-pink-500">
+                        {existingCommentCount + 1}
+                      </span>{" "}
+                      <Logo withText={false} size="xs" />
+                    </span>
+                  )}
+                </Button>
               </div>
             </div>
           </div>
+        </div>
 
-          {error && (
-            <p className="text-xs text-red-500 dark:text-red-400 ml-13">
-              {error}
-            </p>
-          )}
-        </form>
+        {error && (
+          <p className="text-xs text-red-500 dark:text-red-400 ml-13">
+            {error}
+          </p>
+        )}
       </CardContent>
+
+      {account?.address && (
+        <TopUpModal
+          open={showTopUpModal}
+          onOpenChange={setShowTopUpModal}
+          onSuccess={() => {
+            // Optionally retry the comment submission after successful mint
+            router.refresh();
+          }}
+        />
+      )}
     </Card>
   );
 }

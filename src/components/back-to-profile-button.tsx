@@ -5,7 +5,7 @@ import { AccountAddress, AccountName, AccountProvider } from "thirdweb/react";
 import { shortenAddress } from "thirdweb/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { client } from "@/lib/thirdweb";
+import { client } from "@/lib/thirdweb.client";
 
 interface BackToProfileButtonProps {
   ownerAddress: string;

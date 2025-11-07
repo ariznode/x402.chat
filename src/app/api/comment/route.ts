@@ -1,14 +1,13 @@
 import { count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getAddress, isAddress } from "thirdweb";
-import { base } from "thirdweb/chains";
 import * as x402 from "thirdweb/x402";
 import z from "zod";
 import { db } from "@/db/client";
 import { comments } from "@/db/schema";
-import { serverClient } from "@/lib/server-client";
-
-const BASE_UNIT_PRICE = 0.01;
+import { chain } from "@/lib/constants";
+import { serverClient } from "@/lib/thirdweb.server";
+import { getDynamicPrice } from "../constants";
 
 const addressSchema = z
   .string()
@@ -51,9 +50,6 @@ export async function POST(request: Request) {
     .from(comments)
     .where(eq(comments.ownerAddress, validatedData.data.ownerAddress));
 
-  // Calculate dynamic price based on existing comments
-  const dynamicPrice = `$${(existingCommentsCount * BASE_UNIT_PRICE).toFixed(2)}`;
-
   const result = await x402.settlePayment({
     resourceUrl: "https://x402.chat/api/comment",
     routeConfig: {
@@ -86,8 +82,8 @@ export async function POST(request: Request) {
     method: "POST",
     paymentData: paymentData,
     payTo: validatedData.data.ownerAddress,
-    network: base,
-    price: dynamicPrice,
+    network: chain,
+    price: getDynamicPrice(existingCommentsCount),
     facilitator: facilitator,
   });
   if (result.status !== 200) {

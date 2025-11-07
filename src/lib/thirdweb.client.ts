@@ -13,7 +13,9 @@ export const wallets = [
       options: ["email", "passkey"],
     },
   }),
-  createWallet("io.metamask"),
+  createWallet("io.metamask", {
+    preferDeepLink: true,
+  }),
   createWallet("com.coinbase.wallet"),
   createWallet("me.rainbow"),
   createWallet("com.okex.wallet"),

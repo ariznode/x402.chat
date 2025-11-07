@@ -58,7 +58,7 @@ export function PageNavigator() {
             placeholder="Enter wallet address or ENS name..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             disabled={isResolving}
             className="pl-9 bg-background h-10"
           />

@@ -1,7 +1,11 @@
-import { mainnet } from "thirdweb/chains";
-import { resolveAddress, resolveName } from "thirdweb/extensions/ens";
+import { base, mainnet } from "thirdweb/chains";
+import {
+  BASENAME_RESOLVER_ADDRESS,
+  resolveAddress,
+  resolveName,
+} from "thirdweb/extensions/ens";
 import { getAddress, isAddress } from "thirdweb/utils";
-import { client } from "./thirdweb";
+import { client } from "./thirdweb.client";
 
 const nameToAddressCache = new Map<string, string | null>();
 const addressToNameCache = new Map<string, string | null>();
@@ -37,19 +41,24 @@ export async function resolveENS(
 
   let address: string | null = nameToAddressCache.get(nameOrAddress) ?? null;
   if (!address) {
-    try {
-      address = await resolveAddress({
+    const [mainnetAddress, baseAddress] = await Promise.all([
+      resolveAddress({
         client,
         name: nameOrAddress,
         resolverChain: mainnet,
-      });
-    } catch (error) {
-      console.error("*** Error resolving address:", error);
-      return {
-        ensName: null,
-        address: null,
-      };
-    }
+      }).catch(() => {
+        return null;
+      }),
+      resolveAddress({
+        client,
+        name: nameOrAddress,
+        resolverAddress: BASENAME_RESOLVER_ADDRESS,
+        resolverChain: base,
+      }).catch(() => {
+        return null;
+      }),
+    ]);
+    address = mainnetAddress || baseAddress;
   }
 
   // if we are unable to resolve the address, return null

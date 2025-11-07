@@ -20,7 +20,7 @@ import type {
   CommentWithParent,
   CommentWithReplies,
 } from "@/lib/queries/comments";
-import { client } from "@/lib/thirdweb";
+import { client } from "@/lib/thirdweb.client";
 import { Skeleton } from "./ui/skeleton";
 
 interface CommentCardProps {
@@ -259,10 +259,11 @@ export function CommentCard({
                   >
                     <MessageCircle className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                      {commentWithReplies.replies?.length || 0}{" "}
-                      {commentWithReplies.replies?.length === 1
-                        ? "Comment"
-                        : "Comments"}
+                      {commentWithReplies.replies?.length
+                        ? commentWithReplies.replies?.length === 1
+                          ? "Reply"
+                          : "Replies"
+                        : "Reply"}
                     </span>
                   </Button>
                 </Link>
