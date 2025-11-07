@@ -4,6 +4,8 @@
 
 Post comments on anyone's wall, with each post requiring payment in CHAT tokens. The more comments on a wall the more it costs to post!
 
+Try it live at [x402.chat](https://x402.chat).
+
 The app showcases [thirdweb's x402 stack](https://portal.thirdweb.com/payments/x402) with dynamic pricing based on comment count and payments on 3 chains and 4 different tokens handled through the x402 facilitator.
 
 ## thirdweb x402 Facilitator
