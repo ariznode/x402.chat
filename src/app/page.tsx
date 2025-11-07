@@ -1,6 +1,7 @@
 import { LatestCommentsFeed } from "@/components/latest-comments-feed";
 import { PageNavigator } from "@/components/page-navigator";
 import { getLatestComments } from "@/lib/queries/comments";
+import { Logo } from "../components/logo";
 
 export default async function Home() {
   const latestComments = await getLatestComments(10);
@@ -11,11 +12,13 @@ export default async function Home() {
         {/* Navigation Section */}
         <div className="mx-auto max-w-2xl text-center space-y-6">
           <div className="space-y-3">
-            <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            <div className="text-3xl font-bold flex items-center gap-1 justify-center">
               Post on Anyone&apos;s Wall
-            </h2>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Enter any wallet address or ENS name to view or post on their wall
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Posting costs{" "}
+              <span className="font-bold text-pink-500">$CHAT</span> tokens -
+              the more popular the page, the more expensive to post!
             </p>
           </div>
           <PageNavigator />

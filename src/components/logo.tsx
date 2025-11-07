@@ -3,7 +3,7 @@ interface LogoProps {
   size?: "xs" | "sm" | "md" | "lg";
 }
 
-export function Logo({ withText = true, size = "md" }: LogoProps) {
+export function Logo({ size = "md" }: LogoProps) {
   const sizes = {
     xs: {
       container: "h-6",
@@ -30,21 +30,10 @@ export function Logo({ withText = true, size = "md" }: LogoProps) {
   const sizeConfig = sizes[size];
 
   return (
-    <div className="flex items-center gap-2">
-      <img
-        src="/icon.png"
-        alt="x402.chat"
-        className={`${sizeConfig.icon} shrink-0`}
-      />
-
-      {/* Text */}
-      {withText && (
-        <span
-          className={`font-bold text-zinc-900 dark:text-zinc-100 ${sizeConfig.text}`}
-        >
-          x402.chat
-        </span>
-      )}
-    </div>
+    <img
+      src="/icon.png"
+      alt="x402.chat"
+      className={`${sizeConfig.icon} shrink-0`}
+    />
   );
 }
