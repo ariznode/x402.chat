@@ -1,16 +1,13 @@
 import { count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getAddress, isAddress } from "thirdweb";
-import { base } from "thirdweb/chains";
 import * as x402 from "thirdweb/x402";
 import z from "zod";
 import { db } from "@/db/client";
 import { comments } from "@/db/schema";
 import { serverClient } from "@/lib/thirdweb.server";
+import { chain } from "../../../lib/constants";
 import { getDynamicPrice } from "../constants";
-
-const BASE_UNIT_PRICE = 0.01;
-const chain = base;
 
 const replySchema = z.object({
   text: z
