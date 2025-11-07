@@ -2,7 +2,7 @@
 
 ![x402.chat Banner](./src/app/opengraph-image.png)
 
-Post comments on anyone's wall, with each post requiring payment in CHAT tokens. The more comments on a wall the more it costs to post!
+Post messages on anyone's page, with each post requiring payment in CHAT tokens. The more comments on a page the more it costs to post!
 
 Try it live at [x402.chat](https://x402.chat).
 

@@ -232,7 +232,7 @@ export function CommentCard({
                       </AccountProvider>
                     </div>
                   </Link>
-                  <span className="-ml-1">&apos;s wall</span>
+                  <span className="-ml-1">&apos;s page</span>
                 </div>
               )}
             </div>

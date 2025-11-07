@@ -1,7 +1,6 @@
 import { LatestCommentsFeed } from "@/components/latest-comments-feed";
 import { PageNavigator } from "@/components/page-navigator";
 import { getLatestComments } from "@/lib/queries/comments";
-import { Logo } from "../components/logo";
 
 export default async function Home() {
   const latestComments = await getLatestComments(10);
@@ -13,7 +12,7 @@ export default async function Home() {
         <div className="mx-auto max-w-2xl text-center space-y-6">
           <div className="space-y-3">
             <div className="text-3xl font-bold flex items-center gap-1 justify-center">
-              Post on Anyone&apos;s Wall
+              Post on Anyone&apos;s Page
             </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Posting costs{" "}
