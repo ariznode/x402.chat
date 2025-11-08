@@ -143,3 +143,5 @@ pnpm dev
 ---
 
 Built with [thirdweb](https://thirdweb.com/), [Next.js 16](https://nextjs.org/), and [Tailwind CSS v4](https://tailwindcss.com/)
+
+Thanks
